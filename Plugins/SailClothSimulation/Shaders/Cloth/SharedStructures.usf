@@ -1,0 +1,16 @@
+// SharedStructures.usf
+
+#ifndef SHARED_STRUCTURES_USF
+#define SHARED_STRUCTURES_USF
+
+struct FParticleGPU
+{
+    float3 Position;
+    float3 PrevPosition;
+    float3 Velocity;
+    float3 Normal;
+    float Area;
+    float Mass;
+};
+
+#endif // SHARED_STRUCTURES_USF

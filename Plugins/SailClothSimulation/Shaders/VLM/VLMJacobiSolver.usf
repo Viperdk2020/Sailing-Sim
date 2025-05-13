@@ -1,0 +1,43 @@
+//////VLMJacobiSolver.usf
+uint N;
+uint NumIterations;
+float Tolerance;
+
+StructuredBuffer<float> InfluenceMatrix;
+StructuredBuffer<float> RHS;
+StructuredBuffer<float> GammaRead;
+RWStructuredBuffer<float> GammaWrite;
+RWStructuredBuffer<float> Residuals;
+
+[numthreads(64, 1, 1)]
+void MainCS(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if (i >= N) return;
+
+    float residual = 0.0;
+    float gammaNew = 0.0;
+
+    for (uint iter = 0; iter < NumIterations; ++iter)
+    {
+        float sum = 0.0;
+        uint row = i * N;
+
+        for (uint j = 0; j < N; ++j)
+        {
+            if (j != i)
+                sum += InfluenceMatrix[row + j] * GammaRead[j];
+        }
+
+        float Aii = InfluenceMatrix[row + i];
+        gammaNew = (RHS[i] - sum) / Aii;
+
+        float diff = abs(gammaNew - GammaRead[i]);
+        InterlockedMax(Residuals[0], diff);
+
+        GammaWrite[i] = gammaNew;
+
+        if (iter < NumIterations - 1)
+            GammaRead[i] = gammaNew;
+    }
+}

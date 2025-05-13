@@ -1,0 +1,41 @@
+#include "SharedStructures.usf"
+
+float DeltaTime;
+float Compliance;
+float StretchStiffness;
+
+StructuredBuffer<FParticleGPU> Particles;
+RWStructuredBuffer<FParticleGPU> RWParticles;
+StructuredBuffer<int2> StretchConstraints;
+StructuredBuffer<float> StretchRestLengths;
+
+[numthreads(64, 1, 1)]
+void MainCS(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    uint count, stride;
+    StretchConstraints.GetDimensions(count, stride);
+    if (i >= count) return;
+
+    int2 c = StretchConstraints[i];
+    float restLength = StretchRestLengths[i];
+
+    FParticleGPU A = Particles[c.x];
+    FParticleGPU B = Particles[c.y];
+
+    float3 d = B.Position - A.Position;
+    float L = length(d);
+    float error = L - restLength;
+
+    float invMassA = (A.Mass > 0) ? 1.0 / A.Mass : 0.0;
+    float invMassB = (B.Mass > 0) ? 1.0 / B.Mass : 0.0;
+    float correction = error / (invMassA + invMassB + Compliance) * StretchStiffness;
+
+    float3 correctionVec = normalize(d) * correction;
+
+    A.Position += correctionVec * invMassA;
+    B.Position -= correctionVec * invMassB;
+
+    RWParticles[c.x] = A;
+    RWParticles[c.y] = B;
+}
