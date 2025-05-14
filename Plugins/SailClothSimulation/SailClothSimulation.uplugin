@@ -1,24 +1,11 @@
 {
     "FileVersion": 3,
     "Version": 1,
-    "VersionName": "1.0",
+    "VersionName": "1.0.0",
     "FriendlyName": "Sail Cloth Simulation",
-    "Description": "High-fidelity GPU sail cloth with XPBD and VLM",
-    "Category": "Physics",
-    "EnabledByDefault": true,
-    "CreatedBy": "ChatGPT",
     "Modules": [
-        {
-            "Name": "SailClothShaders",
-            "Type": "Runtime",
-            "LoadingPhase": "PostConfigInit",
-            "AdditionalDependencies": [ "Engine" ]
-        },
-        {
-            "Name": "SailClothSimulation",
-            "Type": "Runtime",
-            "LoadingPhase": "Default",
-            "AdditionalDependencies": [ "Engine", "SailClothShaders" ]
-        }
+        { "Name": "SailCloth", "Type": "Runtime", "LoadingPhase": "Default" },
+        { "Name": "SailClothPhysics", "Type": "Runtime", "LoadingPhase": "Default" },
+        { "Name": "SailClothRendering", "Type": "Runtime", "LoadingPhase": "Default" }
     ]
 }

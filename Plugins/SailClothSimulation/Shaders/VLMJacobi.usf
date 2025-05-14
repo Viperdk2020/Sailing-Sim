@@ -1,0 +1,4 @@
+// VLMJacobi.usf
+#include "Common.ush"
+[numthreads(64,1,1)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID) { }
