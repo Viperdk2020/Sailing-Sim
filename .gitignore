@@ -50,3 +50,5 @@ Session.vim
 # Visual Studio
 .vs
 /Plugins/SailClothSimulation/Intermediate
+/Content
+/Plugins/SailClothSimulation/Binaries
