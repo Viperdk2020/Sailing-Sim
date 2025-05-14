@@ -30,6 +30,9 @@ void USailClothComponent::BeginPlay()
 
     // Generate initial mesh grid
     CreateInitialMesh(GRID_SIZE, GRID_SIZE);
+
+    // Allocate CPU-side particle buffer
+    ParticleData.SetNum(SimCtx.NumParticles);
 }
 
 void USailClothComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -54,6 +57,38 @@ void USailClothComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
         BendStiffness
     );
 
+    // Enqueue readback for constraints
+    const uint32 ConstraintSize = SimCtx.NumStretchConstraints * sizeof(FIntPoint);
+    if (ConstraintSize > 0) // Only if there are constraints
+    {
+        if (!ConstraintReadback.IsReady())
+        {
+            ENQUEUE_RENDER_COMMAND(ReadbackConstraints)(
+                [UAV = SimCtx.StretchConstraintBuffer, ReadbackPtr = &ConstraintReadback, ConstraintSize](FRHICommandListImmediate& RHICmdList)
+                {
+                    ReadbackPtr->EnqueueCopy(RHICmdList, UAV.Buffer, ConstraintSize);
+                }
+            );
+        }
+        else
+        {
+            void* ConstraintData = ConstraintReadback.Lock(ConstraintSize);
+            if (ConstraintData)
+            {
+                StretchConstraints.SetNum(SimCtx.NumStretchConstraints);
+                FMemory::Memcpy(StretchConstraints.GetData(), ConstraintData, ConstraintSize);
+            }
+            ConstraintReadback.Unlock();
+
+            ENQUEUE_RENDER_COMMAND(ReadbackConstraints)(
+                [UAV = SimCtx.StretchConstraintBuffer, ReadbackPtr = &ConstraintReadback, ConstraintSize](FRHICommandListImmediate& RHICmdList)
+                {
+                    ReadbackPtr->EnqueueCopy(RHICmdList, UAV.Buffer, ConstraintSize);
+                }
+            );
+        }
+    }
+
     // Readback and Update Mesh
     ReadbackAndUpdateMesh();
 }
@@ -71,6 +106,10 @@ void USailClothComponent::ReadbackAndUpdateMesh()
     }
 
     // Copy data to CPU-side buffer
+    if (ParticleData.Num() != SimCtx.NumParticles)
+    {
+        ParticleData.SetNum(SimCtx.NumParticles);
+    }
     FMemory::Memcpy(ParticleData.GetData(), DataPtr, NumBytes);
 
     // Unlock the buffer to allow the GPU to reuse it
@@ -82,11 +121,11 @@ void USailClothComponent::ReadbackAndUpdateMesh()
             if (!ProcMesh) return;
 
             TArray<FVector> UpdatedVertices;
-            UpdatedVertices.SetNum(SimCtx.NumParticles);
+            UpdatedVertices.SetNum(ParticleData.Num());
 
-            for (int32 i = 0; i < SimCtx.NumParticles; ++i)
+            for (int32 i = 0; i < ParticleData.Num(); ++i)
             {
-                UpdatedVertices[i] = (FVector)ParticleData[i].Position;
+                UpdatedVertices[i] = FVector(ParticleData[i].Position.X, ParticleData[i].Position.Y, ParticleData[i].Position.Z);
             }
 
             ProcMesh->UpdateMeshSection(
@@ -141,16 +180,26 @@ void USailClothComponent::VisualizeConstraints()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    const FTransform& Transform = GetComponentTransform();
+    const FTransform& Transform = GetOwner()->GetRootComponent()->GetComponentTransform();
 
-    // Stretch Constraints
-    for (int32 i = 0; i < SimCtx.StretchConstraintBuffer.NumBytes / sizeof(FIntPoint); ++i)
+    int32 NumConstraints = StretchConstraints.Num();
+    if (NumConstraints == 0) return;
+
+    for (int32 i = 0; i < NumConstraints; ++i)
     {
-        FIntPoint Constraint;
-        FMemory::Memcpy(&Constraint, SimCtx.StretchConstraintBuffer.GetData() + i * sizeof(FIntPoint), sizeof(FIntPoint));
+        const FIntPoint& Constraint = StretchConstraints[i];
 
-        FVector A = Transform.TransformPosition((FVector)SimCtx.Particles[Constraint.X].Position);
-        FVector B = Transform.TransformPosition((FVector)SimCtx.Particles[Constraint.Y].Position);
+        if (!ParticleData.IsValidIndex(Constraint.X) || !ParticleData.IsValidIndex(Constraint.Y))
+            continue;
+
+        FVector A = Transform.TransformPosition(FVector(
+            ParticleData[Constraint.X].Position.X,
+            ParticleData[Constraint.X].Position.Y,
+            ParticleData[Constraint.X].Position.Z));
+        FVector B = Transform.TransformPosition(FVector(
+            ParticleData[Constraint.Y].Position.X,
+            ParticleData[Constraint.Y].Position.Y,
+            ParticleData[Constraint.Y].Position.Z));
 
         float Dist = FVector::Distance(A, B);
         float RestLength = 10.0f;
@@ -159,6 +208,57 @@ void USailClothComponent::VisualizeConstraints()
         FColor Color = FColor::MakeRedToGreenColorFromScalar(1.0f - T);
 
         DrawDebugLine(World, A, B, Color, false, 0.1f, 0, 2.0f);
+    }
+}
+
+void USailClothComponent::RebuildStripsFromSimData(const FSailClothSimContext* SimCtx, int32 GridWidth, int32 GridHeight)
+{
+    Strips.Empty();
+
+    if (!SimCtx || ParticleData.Num() == 0)
+    {
+        return;
+    }
+
+    // For each strip (column), compute aerodynamic properties
+    for (int32 x = 0; x < GridWidth; ++x)
+    {
+        FSailStrip Strip;
+        FVector3f AccumPos = FVector3f(0, 0, 0);
+        FVector3f AccumNormal = FVector3f(0, 0, 0);
+        float AccumChord = 0.0f;
+        float AccumGamma = 0.0f;
+        float AccumCl = 0.0f;
+        float AccumCd = 0.0f;
+        float AccumTwist = 0.0f;
+        float AccumTrim = 0.0f;
+        int32 Count = 0;
+
+        for (int32 y = 0; y < GridHeight; ++y)
+        {
+            int32 Index = y * GridWidth + x;
+            if (ParticleData.IsValidIndex(Index))
+            {
+                const FParticleGPU& Particle = ParticleData[Index];
+                AccumPos += Particle.Position;
+                AccumNormal += Particle.Normal;
+                // If you have per-particle chord/gamma/Cl/Cd/Twist/Trim, accumulate here
+                ++Count;
+            }
+        }
+
+        if (Count > 0)
+        {
+            Strip.Position = AccumPos / static_cast<float>(Count);
+            Strip.Normal = AccumNormal.GetSafeNormal();
+            Strip.Chord = AccumChord / FMath::Max(1, Count);
+            Strip.Gamma = AccumGamma / FMath::Max(1, Count);
+            Strip.Cl = AccumCl / FMath::Max(1, Count);
+            Strip.Cd = AccumCd / FMath::Max(1, Count);
+            Strip.TwistAngleDeg = AccumTwist / FMath::Max(1, Count);
+            Strip.SailTrimAngleDeg = AccumTrim / FMath::Max(1, Count);
+            Strips.Add(Strip);
+        }
     }
 }
 

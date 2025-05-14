@@ -2,7 +2,6 @@
 #include "RHICommandList.h"
 #include "ShaderParameterUtils.h"
 #include "RenderGraphUtils.h"
-#include "Engine/Engine.h"
 #include "Misc/ScopeLock.h"
 
 #define THREAD_GROUP_SIZE 64
@@ -29,9 +28,9 @@ static void CreateStructuredBuffer(
         DebugName
     );
 
-    void* Ptr = RHILockBuffer(Buffer.Buffer, 0, Data.Num() * sizeof(T), RLM_WriteOnly);
+    void* Ptr = RHILockStructuredBuffer(Buffer.Buffer, 0, Data.Num() * sizeof(T), RLM_WriteOnly);
     FMemory::Memcpy(Ptr, Data.GetData(), Data.Num() * sizeof(T));
-    RHIUnlockBuffer(Buffer.Buffer);
+    RHIUnlockStructuredBuffer(Buffer.Buffer);
 }
 
 // Initialization function for SailClothSimContext
@@ -114,7 +113,7 @@ void FSailClothSimShaders::Simulate(
         Params.Particles = Ctx.ParticleBuffer.SRV;
         Params.RWParticles = Ctx.ParticleBuffer.UAV;
 
-        DispatchComputeShader(
+        FComputeShaderUtils::Dispatch(
             RHICmdList,
             Shader,
             Params,
@@ -135,7 +134,7 @@ void FSailClothSimShaders::Simulate(
         Params.StretchConstraints = Ctx.StretchConstraintBuffer.SRV;
         Params.StretchRestLengths = Ctx.StretchRestLengthBuffer.SRV;
 
-        DispatchComputeShader(
+        FComputeShaderUtils::Dispatch(
             RHICmdList,
             Shader,
             Params,

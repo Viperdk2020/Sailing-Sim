@@ -31,7 +31,7 @@ public:
     /**
      * Get the current aerodynamic strips for debug or analysis.
      */
-    UFUNCTION(BlueprintCallable, Category = "Sail Cloth")
+//    UFUNCTION(BlueprintCallable, Category = "Sail Cloth")
     const TArray<FSailStrip>& GetSailStrips() const { return Strips; }
 
 protected:
@@ -51,6 +51,8 @@ private:
 
     /** GPU readback buffer for particle data */
     FRHIGPUBufferReadback ParticleReadback{ TEXT("SailClothParticleReadback") };
+    // Add this line to define ConstraintReadback as an instance of FRHIGPUBufferReadback
+    FRHIGPUBufferReadback ConstraintReadback{ TEXT("SailClothConstraintReadback")};
 
     /** Cached particle data (CPU side) */
     TArray<FParticleGPU> ParticleData;
