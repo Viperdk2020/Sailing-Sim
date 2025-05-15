@@ -1,54 +1,80 @@
 #include "SailPhysicsManager.h"
-#include "ShaderParameterUtils.h"
 #include "GlobalShader.h"
-#include "PipelineStateCache.h"
-#include "RenderGraphBuilder.h"
-#include "SailPhysicsUtils.h"
+#include "ShaderParameterUtils.h"
+#include "RHICommandList.h"
+#include "RenderGraphUtils.h"
 
-// Include our kernel wrapper
-#include "Kernels/XPBDStretchCS.h"
+#include "XPBDStretchCS.h"
+#include "XPBDBendCS.h"
+#include "VLMJacobiCS.h"
 
-FSailPhysicsManager& FSailPhysicsManager::Get()
+FSailPhysicsManager::FSailPhysicsManager() {}
+FSailPhysicsManager::~FSailPhysicsManager() { Release(); }
+
+void FSailPhysicsManager::Initialize(uint32 InVertexCount)
 {
-    static FSailPhysicsManager Instance;
-    return Instance;
-}
-
-void FSailPhysicsManager::Init()
-{
-    // Pre-cache shaders if necessary
+    VertexCount = InVertexCount;
+    PositionsBuffer.Initialize(sizeof(FVector4f), VertexCount, BUF_UnorderedAccess | BUF_ShaderResource);
+    VelocitiesBuffer.Initialize(sizeof(FVector4f), VertexCount, BUF_UnorderedAccess | BUF_ShaderResource);
+    NormalsBuffer.Initialize(sizeof(FVector4f), VertexCount, BUF_UnorderedAccess | BUF_ShaderResource);
 }
 
 void FSailPhysicsManager::Release()
 {
-    ShaderMapCache.Empty();
+    PositionsBuffer.Release();
+    VelocitiesBuffer.Release();
+    NormalsBuffer.Release();
 }
 
-void FSailPhysicsManager::SolveStretch(
-    FRDGBuilder& GraphBuilder,
-    FRDGBufferRef PositionBuffer,
-    FRDGBufferRef ConstraintBuffer,
-    uint32 NumVerts,
-    uint32 NumConstraints,
-    uint32 Iterations
-)
+void FSailPhysicsManager::Tick(float DeltaTime)
 {
-    FXPBDStretchCS::FParameters* Params = GraphBuilder.AllocParameters<FXPBDStretchCS::FParameters>();
-    Params->Positions = GraphBuilder.CreateSRV(PositionBuffer);
-    Params->Constraints = GraphBuilder.CreateSRV(ConstraintBuffer);
-    Params->OutPositions = GraphBuilder.CreateUAV(PositionBuffer);
-    Params->NumVerts = NumVerts;
-    Params->NumConstraints = NumConstraints;
+    ENQUEUE_RENDER_COMMAND(SimulateCloth)(
+        [this, DeltaTime](FRHICommandListImmediate& RHICmdList)
+        {
+            Simulate(RHICmdList, DeltaTime);
+        }
+    );
+}
 
-    for (uint32 Iter = 0; Iter < Iterations; ++Iter)
-    {
-        TShaderMapRef<FXPBDStretchCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
-        FComputeShaderUtils::AddPass(
-            GraphBuilder,
-            RDG_EVENT_NAME("XPBDStretch Iter %d", Iter),
-            ComputeShader,
-            Params,
-            FIntVector(FMath::DivideAndRoundUp(NumConstraints, 64), 1, 1)
-        );
-    }
+void FSailPhysicsManager::Simulate(FRHICommandListImmediate& RHICmdList, float DeltaTime)
+{
+    DispatchXPBDStretchCS(RHICmdList, DeltaTime);
+    DispatchXPBDBendCS(RHICmdList, DeltaTime);
+    DispatchVLMJacobiCS(RHICmdList, DeltaTime);
+}
+
+void FSailPhysicsManager::DispatchXPBDStretchCS(FRHICommandListImmediate& RHICmdList, float DeltaTime)
+{
+    TShaderMapRef<FXPBDStretchCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+    FXPBDStretchCS::FParameters Params;
+    Params.Positions = PositionsBuffer.UAV;
+    Params.Velocities = VelocitiesBuffer.UAV;
+    Params.DeltaTime = DeltaTime;
+    Params.VertexCount = VertexCount;
+    int32 ThreadGroups = FMath::DivideAndRoundUp(VertexCount, 64);
+    FComputeShaderUtils::Dispatch(RHICmdList, ComputeShader, Params, ThreadGroups, 1, 1);
+}
+
+void FSailPhysicsManager::DispatchXPBDBendCS(FRHICommandListImmediate& RHICmdList, float DeltaTime)
+{
+    TShaderMapRef<FXPBDBendCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+    FXPBDBendCS::FParameters Params;
+    Params.Positions = PositionsBuffer.UAV;
+    Params.Velocities = VelocitiesBuffer.UAV;
+    Params.DeltaTime = DeltaTime;
+    Params.VertexCount = VertexCount;
+    int32 ThreadGroups = FMath::DivideAndRoundUp(VertexCount, 64);
+    FComputeShaderUtils::Dispatch(RHICmdList, ComputeShader, Params, ThreadGroups, 1, 1);
+}
+
+void FSailPhysicsManager::DispatchVLMJacobiCS(FRHICommandListImmediate& RHICmdList, float DeltaTime)
+{
+    TShaderMapRef<FVLMJacobiCS> ComputeShader(GetGlobalShaderMap(GMaxRHIFeatureLevel));
+    FVLMJacobiCS::FParameters Params;
+    Params.Positions = PositionsBuffer.UAV;
+    Params.Velocities = VelocitiesBuffer.UAV;
+    Params.DeltaTime = DeltaTime;
+    Params.VertexCount = VertexCount;
+    int32 ThreadGroups = FMath::DivideAndRoundUp(VertexCount, 64);
+    FComputeShaderUtils::Dispatch(RHICmdList, ComputeShader, Params, ThreadGroups, 1, 1);
 }

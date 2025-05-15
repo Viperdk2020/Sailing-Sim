@@ -1,10 +1,31 @@
 #pragma once
+
 #include "CoreMinimal.h"
-#include "RenderGraphResources.h"
-class FSailPhysicsManager {
+#include "RHI.h"
+#include "RenderResource.h"
+#include "RHIResources.h"
+
+class FSailPhysicsManager
+{
 public:
-    static FSailPhysicsManager& Get();
-    void Init();
+    FSailPhysicsManager();
+    ~FSailPhysicsManager();
+
+    void Initialize(uint32 InVertexCount);
     void Release();
-    void SolveStretch(FRDGBuilder& GraphBuilder, FRDGBufferRef Pos, FRDGBufferRef Constraints, uint32 Verts, uint32 Pairs, uint32 Iters);
+
+    /** Called every frame on game thread */
+    void Tick(float DeltaTime);
+
+private:
+    void Simulate(FRHICommandListImmediate& RHICmdList, float DeltaTime);
+
+    uint32 VertexCount = 0;
+    FRWBufferStructured PositionsBuffer;
+    FRWBufferStructured VelocitiesBuffer;
+    FRWBufferStructured NormalsBuffer;
+
+    void DispatchXPBDStretchCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
+    void DispatchXPBDBendCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
+    void DispatchVLMJacobiCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
 };

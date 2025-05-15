@@ -5,6 +5,7 @@
 #include "SailClothComponent.generated.h"
 
 class FSailPhysicsManager;
+class FSailRenderManager;
 
 USTRUCT(BlueprintType)
 struct FSailSettings
@@ -32,9 +33,10 @@ public:
     virtual void InitializeComponent() override;
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sail Settings")
-    FSailSettings SailSettings;
-
 private:
     TSharedPtr<FSailPhysicsManager> PhysicsManager;
+    TUniquePtr<FSailRenderManager> RenderManager;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Sail Settings", meta=(AllowPrivateAccess="true"))
+    FSailSettings SailSettings;
 };

@@ -1,10 +1,27 @@
-using UnrealBuildTool;
 using System.IO;
-public class SailClothPhysics : ModuleRules {
-    public SailClothPhysics(ReadOnlyTargetRules Target) : base(Target) {
-        PublicDependencyModuleNames.AddRange(new[] {
-            "Core", "CoreUObject", "Engine", "RenderCore", "RHI", "RHICore", "RenderGraph", "ShaderCore"
+using UnrealBuildTool;
+
+public class SailClothPhysics : ModuleRules
+{
+    public SailClothPhysics(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+        PublicDependencyModuleNames.AddRange(new string[]
+        {
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "RHI",
+            "RenderCore"
         });
-        AdditionalShaderDirectories.Add(Path.Combine(ModuleDirectory, "../../Shaders"));
+
+        PrivateDependencyModuleNames.AddRange(new string[]
+        {
+            
+        });
+
+        PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
+        PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
     }
 }

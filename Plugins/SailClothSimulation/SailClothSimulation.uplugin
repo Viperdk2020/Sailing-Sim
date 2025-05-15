@@ -1,11 +1,25 @@
 {
-    "FileVersion": 3,
-    "Version": 1,
-    "VersionName": "1.0.0",
-    "FriendlyName": "Sail Cloth Simulation",
-    "Modules": [
-        { "Name": "SailCloth", "Type": "Runtime", "LoadingPhase": "Default" },
-        { "Name": "SailClothPhysics", "Type": "Runtime", "LoadingPhase": "Default" },
-        { "Name": "SailClothRendering", "Type": "Runtime", "LoadingPhase": "Default" }
-    ]
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "Sail Cloth Simulation",
+  "Description": "Realistic sailcloth physics simulation.",
+  "Category": "Physics",
+  "Modules": [
+    {
+      "Name": "SailCloth",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    },
+    {
+      "Name": "SailClothPhysics",
+      "Type": "Runtime",
+      "LoadingPhase": "PreDefault"
+    },
+    {
+      "Name": "SailClothRendering",
+      "Type": "Runtime",
+      "LoadingPhase": "PostConfigInit"
+    }
+  ]
 }

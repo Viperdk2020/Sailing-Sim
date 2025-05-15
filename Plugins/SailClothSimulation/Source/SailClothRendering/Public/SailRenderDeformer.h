@@ -1,7 +1,19 @@
 #pragma once
+
 #include "CoreMinimal.h"
-#include "RenderGraphResources.h"
-class FSailRenderDeformer {
+#include "RenderResource.h"
+#include "VertexFactory.h"
+#include "RHIResources.h"
+
+class FSailRenderDeformer : public FVertexFactory
+{
 public:
-    static void QueueMeshUpdate(FRDGBuilder& GraphBuilder, FRDGBufferRef SimulatedPos, const FTransform& LocalToWorld);
+    FSailRenderDeformer(ERHIFeatureLevel::Type InFeatureLevel);
+    void InitRHI() override;
+
+    void BindBuffers(FRWBufferStructured& InPositions, FVertexBufferRHIRef& InIndexBuffer);
+
+private:
+    FShaderResourceViewRHIRef PositionSRV;
+    FVertexBufferRHIRef IndexBufferRHI;
 };
