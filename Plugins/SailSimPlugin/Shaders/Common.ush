@@ -1,0 +1,4 @@
+// Common shader helpers
+#ifndef SAILSIM_COMMON_USH
+#define SAILSIM_COMMON_USH
+#endif

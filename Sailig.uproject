@@ -1,0 +1,31 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "YOUR_ENGINE_ASSOCIATION_GUID",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Sailing",  // Replace "Sailing" if your primary game module has a different name
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		// Add any absolutely essential plugins here that you know you need enabled immediately.
+		// You can enable most other plugins later from within the Unreal Engine editor (Edit -> Plugins).
+		/*
+		{
+			"Name": "SailSimPlugin",
+			"Enabled": true
+			
+		},
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true,
+			"TargetAllowList": [
+				"Editor"
+			]
+		},
+		*/
+	]
+}
