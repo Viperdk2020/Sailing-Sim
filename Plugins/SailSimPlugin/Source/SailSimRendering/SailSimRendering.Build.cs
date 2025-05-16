@@ -9,7 +9,7 @@ public class SailSimRendering : ModuleRules
         PublicDependencyModuleNames.AddRange(new[]
         {
             "Core", "CoreUObject", "Engine",
-            "RenderCore", "RHI", "RHICore", "RenderGraph", "ShaderCore",
+            "RenderCore", "RHI", "RHICore",
             "SailSimPhysics"
         });
     }

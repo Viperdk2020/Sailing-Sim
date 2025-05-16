@@ -1,0 +1,37 @@
+
+#include "Common.ush"
+
+RWStructuredBuffer<float4> Positions    : register(u0);
+StructuredBuffer<uint2>    Constraints  : register(t0);
+
+[numthreads(64,1,1)]
+void MainCS(uint3 DTid : SV_DispatchThreadID)
+{
+    uint cid = DTid.x;
+    if (cid >= NumConstraints) return;
+
+    uint2 pair = Constraints[cid];
+    uint i0 = pair.x;
+    uint i1 = pair.y;
+
+    float3 p0 = Positions[i0].xyz;
+    float3 p1 = Positions[i1].xyz;
+
+    float restLen = length(p1 - p0);   // TODO: use precomputed rest length buffer for accuracy
+    float3 dir = p1 - p0;
+    float len = length(dir) + 1e-6;
+    float3 n = dir / len;
+
+    float C = len - restLen;
+    float invMass = 1.0;
+    float compliance = 0.0;
+
+    float denom = 2.0 * invMass + compliance / (DeltaTime * DeltaTime);
+    float lambda = -C / denom;
+
+    float3 delta = lambda * n * invMass;
+
+    // atomicAdd only works on UAV of float; emulate by two writes
+    Positions[i0] = float4(p0 + delta, Positions[i0].w);
+    Positions[i1] = float4(p1 - delta, Positions[i1].w);
+}

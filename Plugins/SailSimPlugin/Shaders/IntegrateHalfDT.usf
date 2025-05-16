@@ -1,0 +1,24 @@
+
+#include "Common.ush"
+
+RWStructuredBuffer<float4> Positions : register(u0);
+RWStructuredBuffer<float4> Velocity  : register(u1);
+StructuredBuffer<float4>   Forces    : register(t0);
+
+[numthreads(64,1,1)]
+void MainCS(uint3 DTid : SV_DispatchThreadID)
+{
+    uint id = DTid.x;
+    if (id >= NumVerts) return;
+
+    float3 pos = Positions[id].xyz;
+    float3 vel = Velocity[id].xyz;
+    float3 force = Forces[id].xyz;
+
+    float invMass = 1.0;              // TODO: expose per-vertex mass
+    vel += (force * invMass) * (0.5 * DeltaTime);
+    pos += vel * (0.5 * DeltaTime);
+
+    Positions[id] = float4(pos, 0);
+    Velocity[id]  = float4(vel, 0);
+}

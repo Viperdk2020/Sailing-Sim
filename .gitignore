@@ -49,9 +49,12 @@ Session.vim
 
 # Visual Studio
 .vs
-/Sailing/Plugins/SailClothSimulation/Intermediate
-/Plugins/SailClothSimulation/Intermediate
+/Sailing/Plugins/SailSimPlugin/Intermediate
+/Plugins/SailSimPlugin/Intermediate
 /Content
-/Plugins/SailClothSimulation/Binaries
+/Plugins/SailSimPlugin/Binaries
 /Sailing.uproject
 /Sailing.uproject
+/Sailig.uproject
+/Sailig.uproject
+/Sailig.uproject

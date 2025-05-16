@@ -1,0 +1,35 @@
+
+#include "Common.ush"
+
+// Position buffer of vertices
+StructuredBuffer<float4> Positions   : register(t0);
+// Strip info buffer: (center xyz, area), (normal xyz, v0 << 16 | v1)
+StructuredBuffer<float4> StripInfo0  : register(t1);
+StructuredBuffer<uint2>  StripInfo1  : register(t2); // vertex indices packed
+RWStructuredBuffer<float4> Forces    : register(u0);
+
+[numthreads(64,1,1)]
+void MainCS(uint3 DTid : SV_DispatchThreadID)
+{
+    uint sid = DTid.x;
+    if (sid >= NumConstraints) return;   // reuse NumConstraints = NumStrips
+
+    float3 center = StripInfo0[sid].xyz;
+    float  area   = StripInfo0[sid].w;
+
+    uint2 indices = StripInfo1[sid];
+    uint  v0 = indices.x;
+    uint  v1 = indices.y;
+
+    // simple flat-plate lift: F =  q * Cl * A * n
+    float3 n = normalize(cross(float3(0,1,0), float3(0,0,1))); // placeholder normal
+    float windSpeed = 10.0;
+    float rho = 1.225;
+    float q = 0.5 * rho * windSpeed * windSpeed;
+    float Cl = 1.2;
+
+    float3 lift = q * Cl * area * n;
+
+    atomicAdd(Forces[v0].xyz, lift * 0.5);
+    atomicAdd(Forces[v1].xyz, lift * 0.5);
+}
