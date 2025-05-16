@@ -5,7 +5,7 @@
 #include "RHICommandList.h"
 
 FSailRenderManager::FSailRenderManager()
-    : SceneProxy(nullptr), Component(nullptr)
+    
 {}
 
 FSailRenderManager::~FSailRenderManager()
@@ -13,25 +13,14 @@ FSailRenderManager::~FSailRenderManager()
     Release();
 }
 
-void FSailRenderManager::Initialize(FSailPhysicsManager* InPhysics, USailClothComponent* InComponent)
+void FSailRenderManager::Initialize()
 {
-    Component = InComponent;
-    SceneProxy = new FSailClothSceneProxy(InComponent, InPhysics);
-    if (SceneProxy)
-    {
-        SceneProxy->InitPrimitiveResource();
-    }
+   
 }
 
 void FSailRenderManager::Release()
 {
-    if (SceneProxy)
-    {
-        SceneProxy->ReleasePrimitiveResource();
-        delete SceneProxy;
-        SceneProxy = nullptr;
-    }
-    Component = nullptr;
+   
 }
 
 void FSailRenderManager::Tick()
@@ -52,7 +41,7 @@ void FSailRenderManager::Tick()
             );
             uint32 VisibilityMap = ~0u;
 
-            This->SceneProxy->GetDynamicMeshElements(Views, ViewFamily, VisibilityMap, *new FMeshElementCollector());
+           // This->SceneProxy->GetDynamicMeshElements(Views, ViewFamily, VisibilityMap, *new FMeshElementCollector());
         }
     );
 }

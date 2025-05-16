@@ -2,9 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "SailPhysicsManager.h"
+#include "SailPhysicsUtils.h"
+#include "SailRenderManager.h"
 #include "SailClothComponent.generated.h"
 
-class FSailPhysicsManager;
+
 
 USTRUCT(BlueprintType)
 struct FSailSettings
@@ -37,4 +40,7 @@ public:
 
 private:
     TSharedPtr<FSailPhysicsManager> PhysicsManager;
+   // TSharedPtr<FSailRenderManager> RenderManager;
+    TUniquePtr<FSailRenderManager> RenderManager;
+     
 };

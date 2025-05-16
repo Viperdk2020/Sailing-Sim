@@ -9,11 +9,11 @@ class FSailRenderDeformer : public FVertexFactory
 {
 public:
     FSailRenderDeformer(ERHIFeatureLevel::Type InFeatureLevel);
-    void InitRHI() override;
+    
 
-    void BindBuffers(FRWBufferStructured& InPositions, FVertexBufferRHIRef& InIndexBuffer);
+   
 
 private:
     FShaderResourceViewRHIRef PositionSRV;
-    FVertexBufferRHIRef IndexBufferRHI;
+    FVertexBuffer IndexBufferRHI;
 };

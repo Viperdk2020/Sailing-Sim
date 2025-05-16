@@ -52,3 +52,5 @@ Session.vim
 /Plugins/SailClothSimulation/Intermediate
 /Content
 /Plugins/SailClothSimulation/Binaries
+/Plugins/SailClothSimulation/Source/SailCloth/Private/SailClothComponent.cpp
+/Plugins/SailClothSimulation/Source/SailCloth/Public/SailClothComponent.h

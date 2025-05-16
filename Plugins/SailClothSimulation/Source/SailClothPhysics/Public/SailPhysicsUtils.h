@@ -30,7 +30,7 @@ public:
 
     FORCEINLINE static void InitializeBuffer(FRWBufferStructured& Buffer, uint32 ElementSize, uint32 ElementCount, EBufferUsageFlags UsageFlags)
     {
-        Buffer.Initialize(ElementSize, ElementCount, UsageFlags);
+       // Buffer.Initialize(ElementSize, ElementCount, UsageFlags);
     }
 
     FORCEINLINE static void ReleaseBuffer(FRWBufferStructured& Buffer)
@@ -42,9 +42,9 @@ public:
     {
         if (Buffer.Buffer != nullptr)
         {
-            void* Data = RHILockBuffer(Buffer.Buffer, 0, Buffer.NumBytes, RLM_WriteOnly);
-            FMemory::Memzero(Data, Buffer.NumBytes);
-            RHIUnlockBuffer(Buffer.Buffer);
+          //  void* Data = RHILockBuffer(Buffer.Buffer, 0, Buffer.NumBytes, RLM_WriteOnly);
+          //  FMemory::Memzero(Data, Buffer.NumBytes);
+         //   RHIUnlockBuffer(Buffer.Buffer);
         }
     }
 };

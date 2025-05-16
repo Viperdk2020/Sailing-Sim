@@ -2,20 +2,20 @@
 
 #include "CoreMinimal.h"
 
-class FSailPhysicsManager;
-class FPrimitiveSceneProxy;
-class USailClothComponent;
+//class FSailPhysicsManager;
+//class FPrimitiveSceneProxy;
+//class USailClothComponent;
 
 /**
  * Manages rendering for sail cloth.
  */
-class SAILCLOTHRENDERING_API FSailRenderManager
+class FSailRenderManager
 {
 public:
     FSailRenderManager();
     ~FSailRenderManager();
 
-    void Initialize(FSailPhysicsManager* InPhysics, USailClothComponent* InComponent);
+    void Initialize();
     void Release();
 
     /** Called every frame on game thread */
@@ -23,5 +23,5 @@ public:
 
 private:
     FPrimitiveSceneProxy* SceneProxy = nullptr;
-    USailClothComponent* Component = nullptr;
+   
 };

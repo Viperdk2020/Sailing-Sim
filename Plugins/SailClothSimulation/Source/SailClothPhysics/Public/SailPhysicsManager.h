@@ -2,8 +2,48 @@
 
 #include "CoreMinimal.h"
 #include "RHI.h"
-#include "RenderResource.h"
-#include "RHIResources.h"
+#include "RHICommandList.h"
+#include "RenderGraphResources.h"
+#include "RenderGraphBuilder.h"
+//#include "MinimalRDGBuffer.h"
+
+
+
+
+
+struct FPersistentRDGSimBuffer
+{
+    TRefCountPtr<FRDGPooledBuffer> Buffer;
+    uint32 NumElements = 0;
+    uint32 Stride = 0;
+
+    void Initialize(FRHICommandListBase& RHICmdList, uint32 InNumElements, uint32 InStride, const TCHAR* DebugName)
+    {
+        Release();
+
+        NumElements = InNumElements;
+        Stride = InStride;
+
+        FRDGBufferDesc Desc = FRDGBufferDesc::CreateStructuredDesc(InStride, InNumElements);
+        Buffer = FRDGBufferPool.FindFreeBuffer(RHICmdList, Desc, DebugName, ERDGPooledBufferAlignment::Default);
+    }
+
+    void Release()
+    {
+        Buffer.SafeRelease();
+        NumElements = 0;
+        Stride = 0;
+    }
+
+    FRHIBuffer* GetRHI() const
+    {
+        return Buffer.IsValid() ? Buffer->GetRHI() : nullptr;
+    }
+};
+
+
+
+
 
 class FSailPhysicsManager
 {
@@ -13,19 +53,21 @@ public:
 
     void Initialize(uint32 InVertexCount);
     void Release();
-
-    /** Called every frame on game thread */
-    void Tick(float DeltaTime);
-
-private:
     void Simulate(FRHICommandListImmediate& RHICmdList, float DeltaTime);
 
-    uint32 VertexCount = 0;
-    FRWBufferStructured PositionsBuffer;
-    FRWBufferStructured VelocitiesBuffer;
-    FRWBufferStructured NormalsBuffer;
+    FPersistentRDGSimBuffer& GetPositionsBuffer() { return PositionsBuffer; }
+    FPersistentRDGSimBuffer& GetVelocitiesBuffer() { return VelocitiesBuffer; }
+    FPersistentRDGSimBuffer& GetNormalsBuffer() { return NormalsBuffer; }
 
-    void DispatchXPBDStretchCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
-    void DispatchXPBDBendCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
-    void DispatchVLMJacobiCS(FRHICommandListImmediate& RHICmdList, float DeltaTime);
+private:
+    uint32 VertexCount = 0;
+    uint32 GroupSize = 64;
+
+    FPersistentRDGSimBuffer PositionsBuffer;
+    FPersistentRDGSimBuffer VelocitiesBuffer;
+    FPersistentRDGSimBuffer NormalsBuffer;
+
+    void DispatchXPBDStretchCS(FRDGBuilder& GraphBuilder, float DeltaTime);
+    void DispatchXPBDBendCS(FRDGBuilder& GraphBuilder, float DeltaTime);
+    void DispatchVLMJacobiCS(FRDGBuilder& GraphBuilder, float DeltaTime);
 };

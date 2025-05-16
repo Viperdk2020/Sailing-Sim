@@ -1,20 +1,14 @@
 #include "Components/SailClothComponent.h"
-#include "SailPhysicsManager.h"
-#include "SailPhysicsUtils.h"
 
-
-USailClothComponent::USailClothComponent()
-{
-    PrimaryComponentTick.bCanEverTick = true;
-}
 
 void USailClothComponent::InitializeComponent()
 {
     Super::InitializeComponent();
-
-    // Create and initialize physics manager with vertex count
     PhysicsManager = MakeShared<FSailPhysicsManager>();
     PhysicsManager->Initialize(SailSettings.NumVertices);
+
+   // RenderManager = MakeUnique<FSailRenderManager>();
+   // RenderManager->Initialize(PhysicsManager.Get(), this);
 }
 
 void USailClothComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -23,12 +17,12 @@ void USailClothComponent::TickComponent(float DeltaTime, ELevelTick TickType, FA
 
     if (PhysicsManager.IsValid())
     {
-        // Update simulation each frame on render thread
-        ENQUEUE_RENDER_COMMAND(SimulateCloth)(
-            [PhysicsManager = PhysicsManager, DeltaTime](FRHICommandListImmediate& RHICmdList)
-            {
-                PhysicsManager->Simulate(RHICmdList, DeltaTime);
-            }
-        );
+     //   PhysicsManager->Tick(DeltaTime);
+    }
+
+    if (RenderManager.IsValid())
+    {
+       // RenderManager->Tick();
     }
 }
+

@@ -14,7 +14,8 @@ public class SailCloth : ModuleRules
             "Engine",
             "RenderCore",
             "RHI",
-            "SailClothPhysics"
+            "SailClothPhysics",
+            "SailClothRendering"
         });
 
         PrivateDependencyModuleNames.AddRange(new string[] { });

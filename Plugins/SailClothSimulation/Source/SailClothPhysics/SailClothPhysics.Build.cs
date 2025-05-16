@@ -18,10 +18,10 @@ public class SailClothPhysics : ModuleRules
 
         PrivateDependencyModuleNames.AddRange(new string[]
         {
-            
+
         });
 
         PublicIncludePaths.Add(Path.Combine(ModuleDirectory, "Public"));
-        PrivateIncludePaths.Add(Path.Combine(ModuleDirectory, "Private"));
+        PrivateIncludePaths.AddRange(new string[] { Path.Combine(ModuleDirectory, "Private"), "SailClothPhysics/Private/Kernels" });
     }
 }
