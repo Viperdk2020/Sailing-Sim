@@ -8,14 +8,14 @@ public class SailSimRendering : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-                "SailSimPlugin/Source/SailSimRendering/Public"
+                "D:\\UE5\\Unreal Projects\\Sailing\\Plugins\\SailSimPlugin\\Source\\SailSimRendering\\Public"
             }
         );
 
         PrivateIncludePaths.AddRange(
             new string[] {
-                "SailSimPlugin/Source/SailSimRendering/Private",
-                "SailSimPlugin/Source/SailSimPhysics/Public" // Corrected path
+                "D:\\UE5\\Unreal Projects\\Sailing\\Plugins\\SailSimPlugin\\Source\\SailSimRendering\\Private",
+                "D:\\UE5\\Unreal Projects\\Sailing\\Plugins\\SailSimPlugin\\Source\\SailSimRendering\\Public"
             }
         );
 

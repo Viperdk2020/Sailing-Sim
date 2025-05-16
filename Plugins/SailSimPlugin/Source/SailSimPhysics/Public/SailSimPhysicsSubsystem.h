@@ -12,6 +12,7 @@
  */
 UCLASS()
 class USailSimPhysicsSubsystem : public UEngineSubsystem
+   
 {
     GENERATED_BODY()
 public:
@@ -19,7 +20,10 @@ public:
     virtual void Deinitialize() override;
     virtual void Tick(float DeltaTime) ;
     //virtual bool IsTickable() const override { return true; }
-   // virtual TStatId GetStatId() const override;
+    //virtual TStatId GetStatId() const override;
+    virtual TStatId GetStatId() const ;
+
+    
 
 private:
     void SwapBuffers();

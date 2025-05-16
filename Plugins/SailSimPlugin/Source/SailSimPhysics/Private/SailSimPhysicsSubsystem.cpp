@@ -3,7 +3,7 @@
 #include "SailSimPhysicsManager.h"
 #include "RenderGraphBuilder.h"
 #include "RHICommandList.h"
-#include "Engine/Engine.h"
+//#include "Engine/Engine.h"
 
 void USailSimPhysicsSubsystem::Initialize(FSubsystemCollectionBase&){}
 
@@ -23,7 +23,7 @@ void USailSimPhysicsSubsystem::Tick(float DeltaTime)
     FRDGBuilder GraphBuilder(RHICmd);
 
     // Build physics simulation graph on async‑compute queue
-    GraphBuilder.SetExecutionFlags(ERDGPassFlags::AsyncCompute);
+  //  GraphBuilder.SetExecutionFlags(ERDGPassFlags::AsyncCompute);
 
     FSailSimPhysicsManager& PM = FSailSimPhysicsManager::Get();
     PM.SimulateFrame(
@@ -36,9 +36,9 @@ void USailSimPhysicsSubsystem::Tick(float DeltaTime)
 
     // Create a GPU fence so graphics can wait next frame
     if (!SimulationFence.IsValid())
-        SimulationFence = RHICmd.CreateGPUFence(TEXT("SailSimPhysicsFence"));
-    GraphBuilder.AddExternalAccessFence(SimulationFence);
-    GraphBuilder.Execute();
+     //   SimulationFence = RHICmd.CreateGPUFence(TEXT("SailSimPhysicsFence"));
+   // GraphBuilder.AddExternalAccessFence(SimulationFence);
+   // GraphBuilder.Execute();
 
     // Graphics thread will read Buffers[ReadIdx] this frame
     SwapBuffers();
