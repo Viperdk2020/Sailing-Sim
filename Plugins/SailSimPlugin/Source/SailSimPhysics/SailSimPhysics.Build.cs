@@ -10,7 +10,7 @@ public class SailSimPhysics : ModuleRules
         PublicDependencyModuleNames.AddRange(new[]
         {
             "Core", "CoreUObject", "Engine",
-            "RenderCore", "RHI", "RHICore", "RenderGraph", "ShaderCore"
+            "RenderCore", "RHI", "RHICore", "RenderGraph"
         });
 
         // Map plugin-level Shaders folder
