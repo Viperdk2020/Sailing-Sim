@@ -12,6 +12,9 @@ class SAILSIMPHYSICS_API FSailSimPhysicsManager
 public:
     static FSailSimPhysicsManager& Get();
 
+
+	int32 GBendIterations = 1;
+
     void Init();
     void Release();
 
