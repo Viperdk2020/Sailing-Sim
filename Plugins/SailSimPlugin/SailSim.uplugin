@@ -1,0 +1,26 @@
+{
+    "FileVersion": 3,
+    "Version": 1,
+    "VersionName": "1.0.0",
+    "FriendlyName": "Sail Sim Plugin",
+    "Description": "Blank sail simulation plugin skeleton with core, physics, and rendering modules.",
+    "Category": "Simulation",
+    "EnabledByDefault": true,
+    "Modules": [
+        {
+            "Name": "SailSimCore",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SailSimPhysics",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        },
+        {
+            "Name": "SailSimRendering",
+            "Type": "Runtime",
+            "LoadingPhase": "Default"
+        }
+    ]
+}
