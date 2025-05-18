@@ -1,28 +1,18 @@
 
 #include "/SailSimPlugin/Common.ush"
+#define SCALE 1000.0
+RWStructuredBuffer<float4> Positions:register(u0);
+RWStructuredBuffer<float4> Velocity:register(u1);
+StructuredBuffer<int> Forces:register(t0);
 
-#define FORCE_SCALE 1000.0
-
-RWStructuredBuffer<float4> Positions : register(u0);
-RWStructuredBuffer<float4> Velocity  : register(u1);
-StructuredBuffer<int>      Forces    : register(t0);
-
-[numthreads(64,1,1)]
-void MainCS(uint3 id : SV_DispatchThreadID)
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void MainCS(uint3 DTid:SV_DispatchThreadID)
 {
-    uint i = id.x;
-    if(i >= NumVerts) return;
-
-    float3 vel = Velocity[i].xyz;
-
-    float3 force;
-    force.x = float(Forces[i*3+0]) / FORCE_SCALE;
-    force.y = float(Forces[i*3+1]) / FORCE_SCALE;
-    force.z = float(Forces[i*3+2]) / FORCE_SCALE;
-
-    vel += force * 0.5 * DeltaTime;
-    float3 pos = Positions[i].xyz + vel * 0.5 * DeltaTime;
-
-    Positions[i] = float4(pos,0);
-    Velocity[i]  = float4(vel,0);
+    uint i=DTid.x;
+    if(i>=NumVerts) return;
+    float3 v=Velocity[i].xyz;
+    float3 f=float3(Forces[i*3],Forces[i*3+1],Forces[i*3+2])/SCALE;
+    v+=f*0.5*DeltaTime;
+    Positions[i].xyz+=v*0.5*DeltaTime;
+    Velocity[i].xyz=v;
 }

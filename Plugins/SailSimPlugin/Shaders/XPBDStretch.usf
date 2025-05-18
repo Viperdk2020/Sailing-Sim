@@ -1,33 +1,22 @@
 
 #include "/SailSimPlugin/Common.ush"
+RWStructuredBuffer<float4> Positions:register(u0);
+StructuredBuffer<uint2> Constraints:register(t0);
 
-RWStructuredBuffer<float4> Positions : register(u0);
-StructuredBuffer<uint2>    Constraints : register(t0);
-
-[numthreads(64,1,1)]
-void MainCS(uint3 id : SV_DispatchThreadID)
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void MainCS(uint3 DTid:SV_DispatchThreadID)
 {
-    uint cid = id.x;
-    if(cid >= NumConstraints) return;
+    uint cid=DTid.x;
+    if(cid>=NumConstraints) return;
 
-    uint2 pair = Constraints[cid];
-    uint i0 = pair.x;
-    uint i1 = pair.y;
+    uint2 pr=Constraints[cid];
+    uint i0=pr.x,i1=pr.y;
+    float3 p0=Positions[i0].xyz,p1=Positions[i1].xyz;
+    float rest=length(p1-p0);
 
-    float3 p0 = Positions[i0].xyz;
-    float3 p1 = Positions[i1].xyz;
-    float restLen = length(p1 - p0); // placeholder rest length
+    float3 dir=p1-p0; float len=length(dir)+1e-6; float3 n=dir/len;
+    float C=len-rest; float lambda=-C*0.5;
 
-    float3 dir = p1 - p0;
-    float len = length(dir) + 1e-6;
-    float3 n = dir / len;
-
-    float C = len - restLen;
-    float invMass = 1.0;
-    float lambda = -C / (2.0 * invMass);
-
-    float3 delta = lambda * n * invMass;
-
-    Positions[i0].xyz += delta;
-    Positions[i1].xyz -= delta;
+    Positions[i0].xyz+=lambda*n;
+    Positions[i1].xyz-=lambda*n;
 }

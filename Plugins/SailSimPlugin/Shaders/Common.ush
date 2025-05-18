@@ -1,9 +1,12 @@
 #include "/Engine/Public/Platform.ush"
-//#include "/Engine/Shaders/Common.ush"
-
 #ifndef SAILSIM_COMMON_USH
 #define SAILSIM_COMMON_USH
-
-
 #define THREAD_GROUP_SIZE 64
+cbuffer Parameters
+{
+    float DeltaTime;
+    uint  NumVerts;
+    uint  NumConstraints;
+    uint  Pad0;
+};
 #endif

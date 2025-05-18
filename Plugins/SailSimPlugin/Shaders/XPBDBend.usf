@@ -1,38 +1,23 @@
 
 #include "/SailSimPlugin/Common.ush"
+RWStructuredBuffer<float4> Positions:register(u0);
+StructuredBuffer<uint4> BendData:register(t0);
 
-RWStructuredBuffer<float4> Positions : register(u0);
-StructuredBuffer<uint4>    BendData  : register(t0);
-
-[numthreads(64,1,1)]
-void MainCS(uint3 id : SV_DispatchThreadID)
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void MainCS(uint3 DTid:SV_DispatchThreadID)
 {
-    uint cid = id.x;
-    if(cid >= NumConstraints) return;
+    uint cid=DTid.x;
+    if(cid>=NumConstraints) return;
+    uint4 d=BendData[cid]; uint i0=d.x,i1=d.y,i2=d.z; float rest=asfloat(d.w);
 
-    uint4 data = BendData[cid];
-    uint i0 = data.x;
-    uint i1 = data.y;
-    uint i2 = data.z;
-    float restCos = asfloat(data.w);
+    float3 p0=Positions[i0].xyz,p1=Positions[i1].xyz,p2=Positions[i2].xyz;
+    float3 e0=normalize(p0-p1),e1=normalize(p2-p1);
+    float C=dot(e0,e1)-rest;
 
-    float3 p0 = Positions[i0].xyz;
-    float3 p1 = Positions[i1].xyz;
-    float3 p2 = Positions[i2].xyz;
+    float3 g0=(e1-C*e0)/length(p0-p1),g2=(e0-C*e1)/length(p2-p1),g1=-g0-g2;
+    float lambda=-C/3.0;
 
-    float3 e0 = normalize(p0 - p1);
-    float3 e1 = normalize(p2 - p1);
-    float cosT = dot(e0,e1);
-    float C = cosT - restCos;
-
-    float3 g0 = (e1 - cosT * e0)/length(p0 - p1);
-    float3 g2 = (e0 - cosT * e1)/length(p2 - p1);
-    float3 g1 = -g0 - g2;
-
-    float invMass = 1.0;
-    float lambda = -C/(3.0*invMass);
-
-    Positions[i0].xyz += invMass*lambda*g0;
-    Positions[i1].xyz += invMass*lambda*g1;
-    Positions[i2].xyz += invMass*lambda*g2;
+    Positions[i0].xyz+=lambda*g0;
+    Positions[i1].xyz+=lambda*g1;
+    Positions[i2].xyz+=lambda*g2;
 }

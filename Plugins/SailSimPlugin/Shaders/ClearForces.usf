@@ -1,11 +1,10 @@
 
-#include "Common.ush"
-RWStructuredBuffer<int> Forces : register(u0);
-
-[numthreads(64,1,1)]
-void MainCS(uint3 id : SV_DispatchThreadID)
+#include "/SailSimPlugin/Common.ush"
+RWStructuredBuffer<int> Forces:register(u0);
+[numthreads(THREAD_GROUP_SIZE,1,1)]
+void MainCS(uint3 DTid:SV_DispatchThreadID)
 {
-    uint i = id.x;
-    if(i >= NumVerts*3) return;
-    Forces[i] = 0;
+    uint idx=DTid.x;
+    if(idx>=NumVerts*3) return;
+    Forces[idx]=0;
 }
