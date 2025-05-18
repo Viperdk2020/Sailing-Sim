@@ -11,13 +11,18 @@
 #include "RenderGraphBuilder.h"
 #include "SailSimPhysicsUtils.h"
 
-FSailSimPhysicsManager& FSailSimPhysicsManager::Get()
-{
-    static FSailSimPhysicsManager Instance;
-    return Instance;
-}
 
 
+
+
+
+///////////// Cvars for tuning simulation ////////////////
+static int32 GSimSubsteps = 4;
+static FAutoConsoleVariableRef CVarSimSubsteps(
+    TEXT("s.Sail.Substeps"),
+    GSimSubsteps,
+    TEXT("Number of physics substeps per frame"),
+    ECVF_Default);
 static int32 GStretchIterations = 4;
 static FAutoConsoleVariableRef CVarStretchIter(
     TEXT("s.Sail.StretchIterations"),
@@ -25,9 +30,38 @@ static FAutoConsoleVariableRef CVarStretchIter(
     TEXT("Number of XPBD stretch sweeps per substep"),
     ECVF_Default);
 
-void FSailSimPhysicsManager::Init() { }
+////////
 
-void FSailSimPhysicsManager::Release() { }
+FSailSimPhysicsManager& FSailSimPhysicsManager::Get()
+{
+    static FSailSimPhysicsManager Instance;
+    return Instance;
+}
+
+
+
+void FSailSimPhysicsManager::Init()
+{
+    // Compile permutation overrides, pre-allocate UAVs, etc.
+}
+
+void FSailSimPhysicsManager::Release()
+{
+    // Destroy any RHIs or UAV pools you allocated
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////// ShaderStuff /////////////////////////////////
 
 void FSailSimPhysicsManager::DispatchIntegrateHalf(
     FRDGBuilder& GraphBuilder,
@@ -97,12 +131,7 @@ void FSailSimPhysicsManager::DispatchBendSweep(
 }
 
 
-static int32 GSimSubsteps = 4;
-static FAutoConsoleVariableRef CVarSimSubsteps(
-    TEXT("s.Sail.Substeps"),
-    GSimSubsteps,
-    TEXT("Number of physics substeps per frame"),
-    ECVF_Default);
+
 
 void FSailSimPhysicsManager::SimulateFrame(
     FRDGBuilder& GraphBuilder,
