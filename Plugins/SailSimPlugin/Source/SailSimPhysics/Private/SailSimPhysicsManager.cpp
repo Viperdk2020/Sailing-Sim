@@ -1,15 +1,9 @@
+#pragma once
+
+#include "CoreMinimal.h"
 #include "SailSimPhysicsManager.h"
+#include "SailSimSailPhyiscsManager.h"
 
-#include "Kernels/VLMJacobiCS.h"
-#include "Kernels/XPBDBendCS.h"
-#include "Kernels/XPBDStretchCS.h"
-#include "Kernels/IntegrateHalfDTCS.h"
-
-
-#include "RenderGraphUtils.h"    // for FComputeShaderUtils::AddPass, GraphBuilder.AddPass, etc.
-
-#include "RenderGraphBuilder.h"
-#include "SailSimPhysicsUtils.h"
 
 
 
@@ -52,7 +46,53 @@ void FSailSimPhysicsManager::Release()
 
 
 
+void FSailSimPhysicsManager::SimulateFrame(float DeltaTime)
+{
+    FRDGBuilder& GraphBuilder;
+    FSailSimBuffers Buffers;
+    FRDGBufferRef StretchConstraints;
 
+
+    uint32 NumStretch,
+        FRDGBufferRef BendConstraints,
+        uint32 NumBend,
+        uint32 NumVerts,
+        ///Graph,
+         //   Buffers[WriteIdx],
+          //  StretchConstraintBuffer, NumStretch,
+          //  BendConstraintBuffer, NumBend,
+          //  NumVerts,
+
+
+
+
+
+        const float SubDt = DeltaTime / float(GSimSubsteps);
+
+    for (int32 Step = 0; Step < GSimSubsteps; ++Step)
+    {
+        // Allocate a transient force buffer (currently zero; VLM will fill later)
+        FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(GraphBuilder, NumVerts);
+
+        // First half-step integrate
+        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
+
+        // Stretch sweeps
+        for (int32 i = 0; i < GStretchIterations; ++i)
+        {
+            DispatchStretchSweep(GraphBuilder, Buffers, StretchConstraints, NumStretch, SubDt);
+        }
+
+        // Bend sweeps
+        for (int32 j = 0; j < GBendIterations; ++j)
+        {
+            DispatchBendSweep(GraphBuilder, Buffers, BendConstraints, NumBend, SubDt);
+        }
+
+        // Second half-step integrate (reuse same forces)
+        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
+    }
+}
 
 
 
@@ -133,42 +173,7 @@ void FSailSimPhysicsManager::DispatchBendSweep(
 
 
 
-void FSailSimPhysicsManager::SimulateFrame(
-    FRDGBuilder& GraphBuilder,
-    FSailSimBuffers Buffers,
-    FRDGBufferRef StretchConstraints,
-    uint32 NumStretch,
-    FRDGBufferRef BendConstraints,
-    uint32 NumBend,
-    uint32 NumVerts,
-    float DeltaTime)
-{
-    const float SubDt = DeltaTime / float(GSimSubsteps);
 
-    for (int32 Step = 0; Step < GSimSubsteps; ++Step)
-    {
-        // Allocate a transient force buffer (currently zero; VLM will fill later)
-        FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(GraphBuilder, NumVerts);
-
-        // First half-step integrate
-        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
-
-        // Stretch sweeps
-        for (int32 i = 0; i < GStretchIterations; ++i)
-        {
-            DispatchStretchSweep(GraphBuilder, Buffers, StretchConstraints, NumStretch, SubDt);
-        }
-
-        // Bend sweeps
-        for (int32 j = 0; j < GBendIterations; ++j)
-        {
-            DispatchBendSweep(GraphBuilder, Buffers, BendConstraints, NumBend, SubDt);
-        }
-
-        // Second half-step integrate (reuse same forces)
-        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
-    }
-}
 
 void FSailSimPhysicsManager::DispatchVLM(
     FRDGBuilder& GraphBuilder,

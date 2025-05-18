@@ -35,14 +35,7 @@ void USailSimPhysicsSubsystem::KickSim(FRDGBuilder& GraphBuilder, float Dt)
 {
     FSailSimPhysicsManager& PM = FSailSimPhysicsManager::Get();
 
-    PM.SimulateFrame(
-        Graph,
-        Buffers[WriteIdx],
-        StretchConstraintBuffer, NumStretch,
-        BendConstraintBuffer, NumBend,
-        NumVerts,
-        Dt
-    );
+    PM.SimulateFrame(Dt);
 }
 
 void USailSimPhysicsSubsystem::Tick(float DeltaTime)
@@ -83,8 +76,8 @@ void USailSimPhysicsSubsystem::Tick(float DeltaTime)
         FRDGBuilder GraphBuilder(RHICmd, RDG_EVENT_NAME("SailSimPhysics"));
 
         // Ensure previous frame’s async work is done before we overwrite WriteIdx
-        if (Fence.IsValid())
-            RHICmd.WaitForFence(Fence);
+      //  if (Fence.IsValid())
+            RHICmdList.BlockUntilGPUIdle();
 
         // Kick the simulation on async queue
         KickSim(GraphBuilder, DeltaSeconds);
