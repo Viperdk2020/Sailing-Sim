@@ -21,7 +21,7 @@ FSailSimBuffers SailSimPhysicsUtils::CreatePerFrameBuffers(FRDGBuilder& GraphBui
 
 FRDGBufferRef SailSimPhysicsUtils::CreateForceBuffer(FRDGBuilder& GraphBuilder, uint32 NumVerts)
 {
-    FRDGBufferDesc ForceDesc = FRDGBufferDesc::CreateStructuredDesc(sizeof(FSailSimForce), NumVerts);
+    FRDGBufferDesc ForceDesc = FRDGBufferDesc::CreateStructuredDesc(sizeof(FSailSimForce), NumVerts*3);
     ForceDesc.Usage |= BUF_UnorderedAccess;
     return GraphBuilder.CreateBuffer(ForceDesc, TEXT("SailSim.Forces"));
 }

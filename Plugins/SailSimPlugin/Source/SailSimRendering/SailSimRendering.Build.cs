@@ -1,10 +1,21 @@
 using UnrealBuildTool;
+// Workaround for Clang Win64 missing kernel32 symbols
+using System;
+using System.IO;
 
 public class SailSimRendering : ModuleRules
 {
     public SailSimRendering(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            PublicSystemLibraries.Add("kernel32.lib");
+            PublicSystemLibraries.Add("user32.lib");
+        }
+
 
         PublicIncludePaths.AddRange(
             new string[] {

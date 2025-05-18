@@ -1,24 +1,28 @@
 
-#include "Common.ush"
+#include "/SailSimPlugin/Common.ush"
+
+#define FORCE_SCALE 1000.0
 
 RWStructuredBuffer<float4> Positions : register(u0);
 RWStructuredBuffer<float4> Velocity  : register(u1);
-StructuredBuffer<float4>   Forces    : register(t0);
+StructuredBuffer<int>      Forces    : register(t0);
 
 [numthreads(64,1,1)]
-void MainCS(uint3 DTid : SV_DispatchThreadID)
+void MainCS(uint3 id : SV_DispatchThreadID)
 {
-    uint id = DTid.x;
-    if (id >= NumVerts) return;
+    uint i = id.x;
+    if(i >= NumVerts) return;
 
-    float3 pos = Positions[id].xyz;
-    float3 vel = Velocity[id].xyz;
-    float3 force = Forces[id].xyz;
+    float3 vel = Velocity[i].xyz;
 
-    float invMass = 1.0;              // TODO: expose per-vertex mass
-    vel += (force * invMass) * (0.5 * DeltaTime);
-    pos += vel * (0.5 * DeltaTime);
+    float3 force;
+    force.x = float(Forces[i*3+0]) / FORCE_SCALE;
+    force.y = float(Forces[i*3+1]) / FORCE_SCALE;
+    force.z = float(Forces[i*3+2]) / FORCE_SCALE;
 
-    Positions[id] = float4(pos, 0);
-    Velocity[id]  = float4(vel, 0);
+    vel += force * 0.5 * DeltaTime;
+    float3 pos = Positions[i].xyz + vel * 0.5 * DeltaTime;
+
+    Positions[i] = float4(pos,0);
+    Velocity[i]  = float4(vel,0);
 }

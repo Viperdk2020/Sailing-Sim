@@ -1,16 +1,17 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 using UnrealBuildTool;
 using System.Collections.Generic;
 
 public class SailingEditorTarget : TargetRules
 {
-	public SailingEditorTarget(TargetInfo Target) : base(Target)
-	{
-		Type = TargetType.Editor;
-        bOverrideBuildEnvironment = true;
-        DefaultBuildSettings = BuildSettingsVersion.V5;
+    public SailingEditorTarget(TargetInfo Target) : base(Target)
+    {
+        Type = TargetType.Editor;
+       // WindowsPlatform.Compiler = WindowsCompiler.Clang;
 
-		ExtraModuleNames.AddRange( new string[] { "Sailing" } );
-	}
+       
+
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+        ExtraModuleNames.AddRange(new string[] { "Sailing" });
+    }
 }

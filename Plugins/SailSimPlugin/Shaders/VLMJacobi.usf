@@ -1,35 +1,37 @@
 
-#include "Common.ush"
+#include "/SailSimPlugin/Common.ush"
 
-// Position buffer of vertices
-StructuredBuffer<float4> Positions   : register(t0);
-// Strip info buffer: (center xyz, area), (normal xyz, v0 << 16 | v1)
-StructuredBuffer<float4> StripInfo0  : register(t1);
-StructuredBuffer<uint2>  StripInfo1  : register(t2); // vertex indices packed
-RWStructuredBuffer<float4> Forces    : register(u0);
+#define FORCE_SCALE 1000.0
+
+StructuredBuffer<float4> Positions : register(t0);
+StructuredBuffer<float4> StripInfo0 : register(t1);
+StructuredBuffer<uint2>  StripInfo1 : register(t2);
+RWStructuredBuffer<int>  Forces     : register(u0); // packed int xyz
 
 [numthreads(64,1,1)]
-void MainCS(uint3 DTid : SV_DispatchThreadID)
+void MainCS(uint3 id : SV_DispatchThreadID)
 {
-    uint sid = DTid.x;
-    if (sid >= NumConstraints) return;   // reuse NumConstraints = NumStrips
+    uint sid = id.x;
+    if(sid >= NumConstraints) return;
 
-    float3 center = StripInfo0[sid].xyz;
-    float  area   = StripInfo0[sid].w;
+    uint2 idx = StripInfo1[sid];
+    uint v0 = idx.x;
+    uint v1 = idx.y;
 
-    uint2 indices = StripInfo1[sid];
-    uint  v0 = indices.x;
-    uint  v1 = indices.y;
+    float area = StripInfo0[sid].w;
+    float3 n = float3(0,0,1); // placeholder normal
+    float3 lift = 10 * area * n;
 
-    // simple flat-plate lift: F =  q * Cl * A * n
-    float3 n = normalize(cross(float3(0,1,0), float3(0,0,1))); // placeholder normal
-    float windSpeed = 10.0;
-    float rho = 1.225;
-    float q = 0.5 * rho * windSpeed * windSpeed;
-    float Cl = 1.2;
+    int3 scaled = int3(lift * FORCE_SCALE + 0.5);
 
-    float3 lift = q * Cl * area * n;
+    uint base0 = v0*3;
+    uint base1 = v1*3;
 
-    atomicAdd(Forces[v0].xyz, lift * 0.5);
-    atomicAdd(Forces[v1].xyz, lift * 0.5);
+    int dummy;
+    InterlockedAdd(Forces[base0+0], scaled.x, dummy);
+    InterlockedAdd(Forces[base0+1], scaled.y, dummy);
+    InterlockedAdd(Forces[base0+2], scaled.z, dummy);
+    InterlockedAdd(Forces[base1+0], scaled.x, dummy);
+    InterlockedAdd(Forces[base1+1], scaled.y, dummy);
+    InterlockedAdd(Forces[base1+2], scaled.z, dummy);
 }
