@@ -48,15 +48,16 @@ void FSailSimPhysicsManager::Release()
 
 void FSailSimPhysicsManager::SimulateFrame(float DeltaTime)
 {
-    FRDGBuilder& GraphBuilder;
+   // FRDGBuilder& GraphBuilder;
+    DispatchData.Buffers;
     FSailSimBuffers Buffers;
     FRDGBufferRef StretchConstraints;
 
 
-    uint32 NumStretch,
-        FRDGBufferRef BendConstraints,
-        uint32 NumBend,
-        uint32 NumVerts,
+    uint32 NumStretch;
+    FRDGBufferRef BendConstraints;
+    uint32 NumBend;
+    uint32 NumVerts;
         ///Graph,
          //   Buffers[WriteIdx],
           //  StretchConstraintBuffer, NumStretch,
@@ -72,25 +73,25 @@ void FSailSimPhysicsManager::SimulateFrame(float DeltaTime)
     for (int32 Step = 0; Step < GSimSubsteps; ++Step)
     {
         // Allocate a transient force buffer (currently zero; VLM will fill later)
-        FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(GraphBuilder, NumVerts);
+       // FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(GraphBuilder, NumVerts);
 
         // First half-step integrate
-        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
+      //  DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
 
         // Stretch sweeps
         for (int32 i = 0; i < GStretchIterations; ++i)
         {
-            DispatchStretchSweep(GraphBuilder, Buffers, StretchConstraints, NumStretch, SubDt);
+           // DispatchStretchSweep(GraphBuilder, Buffers, StretchConstraints, NumStretch, SubDt);
         }
 
         // Bend sweeps
         for (int32 j = 0; j < GBendIterations; ++j)
         {
-            DispatchBendSweep(GraphBuilder, Buffers, BendConstraints, NumBend, SubDt);
+         //   DispatchBendSweep(GraphBuilder, Buffers, BendConstraints, NumBend, SubDt);
         }
 
         // Second half-step integrate (reuse same forces)
-        DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
+       // DispatchIntegrateHalf(GraphBuilder, Buffers, ForceBuf, SubDt, NumVerts);
     }
 }
 
