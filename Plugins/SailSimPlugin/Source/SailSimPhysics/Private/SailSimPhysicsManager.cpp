@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
 #include "SailSimPhysicsManager.h"
 #include "SailSimSailPhyiscsManager.h"
 
@@ -28,8 +27,8 @@ static FAutoConsoleVariableRef CVarStretchIter(
 
 FSailSimPhysicsManager& FSailSimPhysicsManager::Get()
 {
-    static FSailSimPhysicsManager Instance;
-    return Instance;
+ //   static FSailSimPhysicsManager Instance;
+    return NULL;
 }
 
 
@@ -50,14 +49,14 @@ void FSailSimPhysicsManager::SimulateFrame(float DeltaTime)
 {
    // FRDGBuilder& GraphBuilder;
     DispatchData.Buffers;
-    FSailSimBuffers Buffers;
-    FRDGBufferRef StretchConstraints;
+   // FSailSimBuffers Buffers;
+   // FRDGBufferRef StretchConstraints;
 
 
-    uint32 NumStretch;
-    FRDGBufferRef BendConstraints;
-    uint32 NumBend;
-    uint32 NumVerts;
+  //  uint32 NumStretch;
+ //   FRDGBufferRef BendConstraints;
+ //   uint32 NumBend;
+  //  uint32 NumVerts;
         ///Graph,
          //   Buffers[WriteIdx],
           //  StretchConstraintBuffer, NumStretch,

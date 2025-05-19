@@ -8,7 +8,15 @@ public class SailSimCore : ModuleRules
     public SailSimCore(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new[] { "Core", "CoreUObject", "Engine" });
+        PublicDependencyModuleNames.AddRange(new[] { 
+            "Core",
+            "CoreUObject",
+            "Engine",
+            "InputCore",
+            "UMG",
+            "Slate",
+            "SlateCore"
+        });
       
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {

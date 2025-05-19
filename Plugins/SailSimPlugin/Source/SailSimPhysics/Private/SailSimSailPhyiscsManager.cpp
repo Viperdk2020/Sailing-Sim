@@ -1,8 +1,5 @@
 #pragma once
 
-#include "CoreMinimal.h"
-
-
 #include "SailSimSailPhyiscsManager.h"
 
 

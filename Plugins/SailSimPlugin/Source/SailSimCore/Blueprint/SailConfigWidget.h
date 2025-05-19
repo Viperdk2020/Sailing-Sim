@@ -1,8 +1,10 @@
 #pragma once
 
-#include "Blueprint/UserWidget.h"
+#include "CoreMinimal.h"                        // always first
+#include "Blueprint/UserWidget.h"               // for UUserWidget
+#include "SailConfigWidget.generated.h"         // must exactly match this filename
 
-#include "SailConfigWidget.generated.h"
+
 
 USTRUCT(BlueprintType)
 struct FSailGeometrySettings
@@ -47,11 +49,21 @@ struct FClothTweakSettings
 };
 
 UCLASS(Abstract, Blueprintable)
-class USailConfigWidget : public UUserWidget
+class SAILSIMCORE_API USailConfigWidget : public UUserWidget
 {
     GENERATED_BODY()
 
 public:
+
+    /** Called whenever the user changes a value in the UI */
+    UFUNCTION(BlueprintImplementableEvent, Category = "Sail")
+    void OnConfigChanged();
+
+    /** How tight the sail should be, 0–1 in the UI slider */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sail",
+        meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+    float SailTension = 0.5f;
+
     // mainsail + jib settings exposed to Blueprint
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sail")
     FSailGeometrySettings MainGeom;
