@@ -1,59 +1,30 @@
 
 #include "SailSimSailPhysicsManager.h"
 #include "SailSimPhysicsUtils.h"
-#include "SailSimPhysicsManager.h"
 
-// Include compute kernel wrappers
-#include "Kernels/IntegrateHalfDTCS.h"
-#include "Kernels/VLMJacobiCS.h"
-#include "Kernels/XPBDStretchCS.h"
-#include "Kernels/XPBDBendCS.h"
-
-
+using namespace SailSimPhysicsUtils;
 
 void FSailSimSailPhysicsManager::Init(FRDGBuilder& Graph,
-                                      uint32 InVerts,
-                                      FRDGBufferRef InStretch, uint32 InNumStretch,
-                                      FRDGBufferRef InBend,    uint32 InNumBend,
-                                      FRDGBufferRef InStrip0,  FRDGBufferRef InStrip1,
-                                      uint32 InNumStrips)
+    uint32 V, FRDGBufferRef St,uint32 Ns, FRDGBufferRef Be,uint32 Nb,
+    FRDGBufferRef S0,FRDGBufferRef S1,uint32 NsStrips)
 {
-    NumVerts = InVerts;
-    NumStretch = InNumStretch;
-    NumBend = InNumBend;
-    NumStrips = InNumStrips;
-
-    StretchSRV = InStretch;
-    BendSRV    = InBend;
-    Strip0SRV  = InStrip0;
-    Strip1SRV  = InStrip1;
+    NumVerts=V;NumStretch=Ns;NumBend=Nb;NumStrips=NsStrips;
+    StretchSRV=St;BendSRV=Be;Strip0SRV=S0;Strip1SRV=S1;
 
     Buffers = SailSimPhysicsUtils::CreatePerFrameBuffers(Graph, NumVerts);
     CachedPosSRV = Graph.CreateSRV(Buffers.Position);
-
-    // register with boat‑level manager
-    FSailSimPhysicsManager::Get().AddSail(this);
 }
 
-void FSailSimSailPhysicsManager::Simulate(FRDGBuilder& Graph, float Dt)
+void FSailSimSailPhysicsManager::Simulate(FRDGBuilder& G,float Dt)
 {
-    // allocate per‑substep force buffer
-    FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(Graph, NumVerts);
+    FRDGBufferRef ForceBuf = SailSimPhysicsUtils::CreateForceBuffer(G, NumVerts);
+    Buffers.Forces = ForceBuf;
 
-    // integrate half DT
-    SailSimPhysicsUtils::DispatchIntegrateHalf(Graph, Buffers, ForceBuf, Dt, NumVerts);
+    SailSimPhysicsUtils::DispatchIntegrateHalf(G,Buffers,ForceBuf,Dt,NumVerts);
+    SailSimPhysicsUtils::DispatchVLM(G,Buffers,Strip0SRV,Strip1SRV,NumStrips);
 
-    // VLM Jacobi
-    FSailSimPhysicsUtils::DispatchVLM(Graph, Buffers, Strip0SRV, Strip1SRV, NumStrips);
+    for(int i=0;i<4;++i) SailSimPhysicsUtils::DispatchStretchSweep(G,Buffers,StretchSRV,NumStretch,Dt);
+    for(int j=0;j<2;++j) SailSimPhysicsUtils::DispatchBendSweep(G,Buffers,BendSRV,NumBend,Dt);
 
-    // stretch sweeps
-    for(int i=0;i<4;++i)
-        FSailSimPhysicsUtils::DispatchStretchSweep(Graph, Buffers, StretchSRV, NumStretch, Dt);
-
-    // bend sweeps
-    for(int j=0;j<2;++j)
-        FSailSimPhysicsUtils::DispatchBendSweep(Graph, Buffers, BendSRV, NumBend, Dt);
-
-    // second integrate
-    FSailSimPhysicsUtils::DispatchIntegrateHalf(Graph, Buffers, ForceBuf, Dt, NumVerts);
+    SailSimPhysicsUtils::DispatchIntegrateHalf(G,Buffers,ForceBuf,Dt,NumVerts);
 }

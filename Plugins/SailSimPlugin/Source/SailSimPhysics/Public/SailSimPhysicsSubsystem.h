@@ -12,9 +12,9 @@ class SAILSIMPHYSICS_API USailSimPhysicsSubsystem : public UEngineSubsystem
 public:
     virtual void Initialize(FSubsystemCollectionBase& Collection) override;
     virtual void Deinitialize() override;
-    virtual void Tick(float DeltaSeconds) override;
-    virtual bool IsTickable() const override { return true; }
-    virtual TStatId GetStatId() const override;
+    virtual void Tick(float DeltaSeconds);
+   // virtual bool IsTickable() const override { return true; }
+    virtual TStatId GetStatId() const;
 
 private:
     FSailSimPhysicsManager* Manager = nullptr;

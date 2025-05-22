@@ -21,14 +21,14 @@ void USailSimPhysicsSubsystem::Tick(float Dt)
     FRHICommandListImmediate& RHICmd = GRHICommandList.GetImmediateCommandList();
     FRDGBuilder Graph(RHICmd, RDG_EVENT_NAME("SailSimBoat"));
 
-    if(Fence.IsValid())
-        RHICmd.WaitForFence(Fence);
+   // if(Fence.IsValid())
+     //   RHICmd.WaitForFence(Fence);
 
     Manager->SimulateFrame(Graph, Dt);
 
-    if(!Fence.IsValid())
-        Fence = RHICmd.CreateGPUFence(TEXT("SailSimBoatFence"));
-    Graph.AddExternalAccessFence(Fence);
+   // if(!Fence.IsValid())
+      //  Fence = RHICmd.CreateGPUFence(TEXT("SailSimBoatFence"));
+   // Graph.AddExternalAccessFence(Fence);
 
     Graph.Execute();
 }

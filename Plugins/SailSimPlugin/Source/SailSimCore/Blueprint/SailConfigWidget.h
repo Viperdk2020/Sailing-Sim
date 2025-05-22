@@ -1,8 +1,10 @@
-#pragma once
+Ôªø#pragma once
 
 #include "CoreMinimal.h"                        // always first
-#include "Blueprint/UserWidget.h"               // for UUserWidget
+#include "Blueprint/UserWidget.h"              // for UUserWidget
+#include <Components/SpinBox.h>			        // for USpinBox
 #include "SailConfigWidget.generated.h"         // must exactly match this filename
+
 
 
 
@@ -48,6 +50,16 @@ struct FClothTweakSettings
     float AirDrag = 1.0f;
 };
 
+// Runtime field definition for UI grids (not a USTRUCT, no UPROPERTY)
+struct FFieldDef
+{
+    FString Label;
+    void* Ptr;
+    float Min;
+    float Max;
+    float Delta;
+};
+
 UCLASS(Abstract, Blueprintable)
 class SAILSIMCORE_API USailConfigWidget : public UUserWidget
 {
@@ -59,7 +71,7 @@ public:
     UFUNCTION(BlueprintImplementableEvent, Category = "Sail")
     void OnConfigChanged();
 
-    /** How tight the sail should be, 0ñ1 in the UI slider */
+    /** How tight the sail should be, 0‚Äì1 in the UI slider */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sail",
         meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
     float SailTension = 0.5f;
@@ -77,7 +89,34 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cloth")
     FClothTweakSettings  JibCloth;
 
-    /** BlueprintImplementable ñ called when ìGenerateî pressed */
+    /** BlueprintImplementable ‚Äì called when ‚ÄúGenerate‚Äù pressed */
     UFUNCTION(BlueprintImplementableEvent, Category = "Sail")
     void OnGenerateRequested();
+
+
+
+
+protected:
+    // Build the UI at runtime
+    virtual void NativeConstruct() override;
+
+private:
+    // Helper to bind a spin‚Äêbox to a float property on this widget
+    template<typename T>
+    void BindSpinBox(USpinBox* Spin, T* ValuePtr);
+
+    // Called when Generate button is clicked
+    UFUNCTION() void HandleGenerateClicked();
+
+    // Handler for spinbox value change
+    UFUNCTION() void OnSpinBoxValueChanged(float NewValue);
 };
+
+
+
+
+
+
+
+
+
