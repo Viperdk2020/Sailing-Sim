@@ -1,0 +1,9 @@
+
+#include "/Engine/Private/Common.ush"
+Texture2D<float4> DebugTex : register(t0);
+SamplerState DebugSampler : register(s0);
+
+float4 MainPS(float2 UV: TEXCOORD0) : SV_Target
+{
+    return DebugTex.Sample(DebugSampler, UV);
+}

@@ -1,0 +1,28 @@
+
+#include "/Engine/Private/Common.ush"
+StructuredBuffer<float4> Positions : register(t0);
+StructuredBuffer<uint2>  Pairs     : register(t1);
+FRDGTextureUAVRef      OutDebug  : register(u0);
+
+cbuffer Params
+{
+    float4x4 ViewProj;
+    float    ErrorScale;
+    uint     NumPairs;
+};
+
+[numthreads(64,1,1)]
+void MainCS(uint3 id : SV_DispatchThreadID)
+{
+    uint i = id.x;
+    if(i>=NumPairs) return;
+    uint2 pr = Pairs[i];
+    float4 A = mul(float4(Positions[pr.x].xyz,1), ViewProj);
+    float4 B = mul(float4(Positions[pr.y].xyz,1), ViewProj);
+    float2 a = A.xy/A.w * 0.5f + 0.5f;
+    float2 b = B.xy/B.w * 0.5f + 0.5f;
+    float err = saturate(length(a-b)*ErrorScale);
+    float3 col = lerp(float3(0,1,0), float3(1,0,0), err);
+    int2 pix = int2(a * OutDebug.GetDimensions());
+    OutDebug[pix] = float4(col,1);
+}

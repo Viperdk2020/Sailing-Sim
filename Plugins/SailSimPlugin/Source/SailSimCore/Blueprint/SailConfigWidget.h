@@ -97,6 +97,14 @@ public:
 
 
 protected:
+    void AddGrid(UWidget* Parent, const TArray<FFieldDef>& Fields);
+
+
+    /** Called in the Designer and at runtime before Construct */
+    virtual void NativePreConstruct() override;
+
+
+
     // Build the UI at runtime
     virtual void NativeConstruct() override;
 
@@ -110,6 +118,16 @@ private:
 
     // Handler for spinbox value change
     UFUNCTION() void OnSpinBoxValueChanged(float NewValue);
+
+
+private:
+    /** Helper that builds all your ExpandableAreas, Grids, Buttons */
+    void BuildAllSections();
+
+    /** Only build once in PreConstruct */
+    bool bHasBuiltDesignerView = false;
+
+
 };
 
 
