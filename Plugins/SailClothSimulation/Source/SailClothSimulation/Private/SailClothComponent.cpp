@@ -97,48 +97,58 @@ void USailClothComponent::ReadbackAndUpdateMesh()
 {
     const uint32 NumBytes = SimCtx.NumParticles * sizeof(FParticleGPU);
 
-    // Lock the GPU buffer and retrieve data
-    void* DataPtr = ParticleReadback.Lock(NumBytes);
-    if (!DataPtr)
+    // If the GPU has finished writing to the readback buffer, copy the data
+    if (ParticleReadback.IsReady())
     {
-        UE_LOG(LogTemp, Warning, TEXT("Failed to lock ParticleReadback buffer"));
-        return;
-    }
-
-    // Copy data to CPU-side buffer
-    if (ParticleData.Num() != SimCtx.NumParticles)
-    {
-        ParticleData.SetNum(SimCtx.NumParticles);
-    }
-    FMemory::Memcpy(ParticleData.GetData(), DataPtr, NumBytes);
-
-    // Unlock the buffer to allow the GPU to reuse it
-    ParticleReadback.Unlock();
-
-    // Update the mesh asynchronously to avoid blocking the game thread
-    AsyncTask(ENamedThreads::GameThread, [this]()
+        void* DataPtr = ParticleReadback.Lock(NumBytes);
+        if (DataPtr)
         {
-            if (!ProcMesh) return;
-
-            TArray<FVector> UpdatedVertices;
-            UpdatedVertices.SetNum(ParticleData.Num());
-
-            for (int32 i = 0; i < ParticleData.Num(); ++i)
+            if (ParticleData.Num() != SimCtx.NumParticles)
             {
-                UpdatedVertices[i] = FVector(ParticleData[i].Position.X, ParticleData[i].Position.Y, ParticleData[i].Position.Z);
+                ParticleData.SetNum(SimCtx.NumParticles);
             }
 
-            ProcMesh->UpdateMeshSection(
-                0,
-                UpdatedVertices,
-                TArray<FVector>(),  // Normals (optional)
-                TArray<FVector2D>(), // UVs (optional)
-                TArray<FColor>(),   // Colors (optional)
-                TArray<FProcMeshTangent>() // Tangents (optional)
-            );
+            FMemory::Memcpy(ParticleData.GetData(), DataPtr, NumBytes);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Failed to lock ParticleReadback buffer"));
+        }
+        ParticleReadback.Unlock();
 
-            VisualizeConstraints();
-        });
+        // Update the mesh asynchronously to avoid blocking the game thread
+        AsyncTask(ENamedThreads::GameThread, [this]()
+            {
+                if (!ProcMesh) return;
+
+                TArray<FVector> UpdatedVertices;
+                UpdatedVertices.SetNum(ParticleData.Num());
+
+                for (int32 i = 0; i < ParticleData.Num(); ++i)
+                {
+                    UpdatedVertices[i] = FVector(ParticleData[i].Position.X, ParticleData[i].Position.Y, ParticleData[i].Position.Z);
+                }
+
+                ProcMesh->UpdateMeshSection(
+                    0,
+                    UpdatedVertices,
+                    TArray<FVector>(),  // Normals (optional)
+                    TArray<FVector2D>(), // UVs (optional)
+                    TArray<FColor>(),   // Colors (optional)
+                    TArray<FProcMeshTangent>() // Tangents (optional)
+                );
+
+                VisualizeConstraints();
+            });
+    }
+
+    // Enqueue a copy of the latest GPU particle buffer for the next frame
+    ENQUEUE_RENDER_COMMAND(ReadbackParticles)(
+        [UAV = SimCtx.ParticleBuffer, ReadbackPtr = &ParticleReadback, NumBytes](FRHICommandListImmediate& RHICmdList)
+        {
+            ReadbackPtr->EnqueueCopy(RHICmdList, UAV.Buffer, NumBytes);
+        }
+    );
 }
 
 void USailClothComponent::CreateInitialMesh(int32 GridWidth, int32 GridHeight)
